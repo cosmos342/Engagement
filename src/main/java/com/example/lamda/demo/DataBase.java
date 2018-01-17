@@ -88,7 +88,8 @@ public class DataBase {
         db_lock.writeLock().lock();
         try {
 
-            Map<Integer,List<Integer>> sid_map = src_map.getOrDefault(feed.get_source(),new HashMap<Integer,List<Integer>>());
+            Map<Integer,List<Integer>> sid_map = src_map.getOrDefault(feed.get_source(),
+            											new HashMap<Integer,List<Integer>>());
             List<Integer> lst = sid_map.getOrDefault(feed.get_id(),init_feed_type_list());
 
             int id = feed.get_id();
@@ -101,6 +102,12 @@ public class DataBase {
 
 
             // Todo user info later
+            List<Integer> fdlst = user_map.getOrDefault(feed.get_user_id(),
+            												init_feed_type_list());
+            count = fdlst.get(type_idx);
+            fdlst.set(type_idx,++count);
+            user_map.put(feed.get_user_id(), fdlst);
+            
 
         } finally {
             db_lock.writeLock().unlock();
@@ -122,7 +129,7 @@ public class DataBase {
                     if (id_map.containsKey(id)) {
                         List<Integer> type_lst = id_map.get(id);
                         res = new String(id + " " + "#LIKES " + type_lst.get(FeedType.LIKE.ordinal())
-                                + "#REPLY" + type_lst.get(FeedType.REPLY.ordinal()));
+                                + " #REPLY " + type_lst.get(FeedType.REPLY.ordinal()));
                     }
                 }
 

@@ -67,7 +67,7 @@ public class EngagementSim {
         String indiv= db.get_stats(FeedSource.TWTR,10);
         
         
-        return db.get_all_stats() + "\n" + indiv;
+        return db.get_all_stats() + '\n' + indiv;
 
     }
 
