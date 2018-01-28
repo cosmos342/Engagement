@@ -19,7 +19,7 @@ public class ConsumerTest {
 	MsgQ que;
 	Thread cons_t;
 	// Database db;
-	Producer prod;
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		
@@ -34,18 +34,17 @@ public class ConsumerTest {
 		que=MsgQ.getInstance();
 		cons_t = new Thread(Consumer.getInstance());
 	    cons_t.start();
-	    prod = new Producer();
 	   		
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		cons_t.interrupt();
+		MsgQ.getInstance().enqueue(new Terminate().encode());
 	}
 
 	@Test
 	public void test() {
-		prod.produce_feed(num_feeds_sent,FeedSource.FB);
+		Producer.produce_feed(num_feeds_sent,FeedSource.FB);
 		try {
 			Thread.sleep(2000);
 		} catch(Exception e){

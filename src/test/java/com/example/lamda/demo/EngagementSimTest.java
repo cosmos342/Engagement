@@ -35,7 +35,7 @@ public class EngagementSimTest {
 
 	@Test
 	public void test() {
-		sim.run_once(50);
+		sim.run_once(1000);
 		
 	}
 
