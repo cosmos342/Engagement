@@ -12,7 +12,7 @@ public class Hello implements RequestHandler<String, String> {
     public String handleRequest(String input, Context context) {
     	EngagementSim sim = new EngagementSim();
     	
-    	return sim.run_once(input != null ? Integer.valueOf(input) : 100 );
+    	return sim.run_once(input != null ? Integer.valueOf(input) : 10 );
     	
     }
 

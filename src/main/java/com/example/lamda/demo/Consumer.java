@@ -2,6 +2,7 @@ package com.example.lamda.demo;
 
 import java.util.stream.IntStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Consumer implements Runnable {
@@ -18,6 +19,7 @@ public class Consumer implements Runnable {
     private List<Object> msg_list;
     private int count_rcvd_msgs=0;
 
+    private boolean terminate=false;
     private Consumer() {
         msg_list=null;
     }
@@ -30,31 +32,39 @@ public class Consumer implements Runnable {
      */
     public void run()
     {
-        System.out.println("starting consumer run");
+        System.out.println("starting consumer run" );
         while(true)
         {
-            System.out.println("consumer waiting for queue");
-            byte [] msg = MsgQ.getInstance().take();
-            System.out.println("consumer got one queue");
-            if(msg != null) {
-                msg_list = new ArrayList<>(MSGS_PER_ATTEMPT);
-
+        	try {
+        		byte [] msg = MsgQ.getInstance().take();
+        		// System.out.println("consumer got one queue");
+          
                 try {
                     Object obj = SerDes.deserialize(msg);
                     if (obj instanceof Feed) {
-                        msg_list.add(obj);
-                        process_msgs();
+                    		add_msg(obj);
+                    		process_msgs();
+                    		if(terminate==true)
+                    		{
+                    			System.out.println("Consumer done! " + Thread.currentThread().getName());
+                    			return;
+                    		}
                     }
-                    else
-                        System.out.println("Consumer msg is of wrong type");
+                    else if(obj instanceof Terminate) {
+                        System.out.println("Consumer done!! " + Thread.currentThread().getName());
+                        return;
+                    }
+                    else {
+                    	System.out.println("ERROR");
+                    }
                 } catch (Exception e) {
-                    System.out.println(e);
+                    System.out.println("consumer:run " + e);
+                    // return;
                 }
-            }
-            else
-            {
-                System.out.println("Shutting down consumer");
-                return;
+        	}
+        	catch(Exception e) {
+        		System.out.println("Consumer Done !!! " + e);
+        		return;
             }
         }
     }
@@ -84,11 +94,31 @@ public class Consumer implements Runnable {
             msg = SerDes.serialize(obj);
             DataBase.getInstance().insert(msg);
         }
-        catch(Exception e)
-        {
-            System.out.println(e);
+        catch(Exception e) {
+            System.out.println("db_insert: " + e);
         }
 
+    }
+    
+    
+    /**
+     *  Utility function to store msg in message list
+     */
+    private void add_msg(Object obj)
+    {
+    	if(msg_list == null)
+    		msg_list=new ArrayList<>(MSGS_PER_ATTEMPT);
+    	
+    	msg_list.add(obj);
+    	
+    }
+    
+    /**
+     *  Utility function to reset message list
+     */
+    private void reset_msg()
+    {
+    	msg_list=null;
     }
 
     /**
@@ -96,19 +126,24 @@ public class Consumer implements Runnable {
      */
     private void process_msg()
     {
-        System.out.println("Consumer:process_msg");
+        // System.out.println("Consumer:process_msg");
         byte [] msg = MsgQ.getInstance().dequeue();
-        if(msg != null)
-        {
+        
+        // System.out.println("process_msg: " + count_rcvd_msgs);
+        if(msg != null) {
 	        try {
 	            Object obj = SerDes.deserialize(msg);
-	            if(obj instanceof Feed)
-	                msg_list.add(obj);
-	            else
-	                System.out.println("Consumer msg is of wrong type");
+	            if(obj instanceof Feed ) {
+	            	add_msg(obj);
+	            }
+	            else {
+	                // System.out.println("process_msg: terminate message rcvd");
+	                terminate=true;
+	                return;
+	            }
 	        } catch (Exception e) {
-	            System.out.println(e);
-	        }
+	            System.out.println("process_msg " + e);
+	        }    
         }
     }
 
@@ -117,33 +152,45 @@ public class Consumer implements Runnable {
      */
     public void process_msgs()
     {
+    	// System.out.println("con process_msgs " + Thread.currentThread().getName());
+   
+        while(MsgQ.getInstance().size() > 0) {
+        	      
+            int size=MsgQ.getInstance().size();
+            try {
 
-        // System.out.println("con process_msgs");
-        while(!MsgQ.getInstance().is_empty()) {
-            if(msg_list==null)
-                msg_list = new ArrayList<>(MSGS_PER_ATTEMPT);
-
-            IntStream.range(0, MSGS_PER_ATTEMPT)
-                    .forEach(i -> process_msg());
-
-            
-            List<Object> tlist = msg_list;
-
-            if (tlist != null) {
-                System.out.println("consumer.msgsize " + tlist.size());
-                tlist.stream().
-                        filter(i -> i != null).
+            	IntStream.range(0, Math.min(size, MSGS_PER_ATTEMPT))
+                	.forEach(i -> process_msg());
+            }
+            catch(Exception e) {
+            	System.out.println("process_msgs: " + e);
+            }
+                               
+            if (msg_list != null) {
+                // System.out.println("consumer.msgsize " + tlist.size());
+            	try {
+            		
+            		msg_list.stream().
+                		filter(i -> i != null).	
                         map(i -> { 
                         	((Feed)i).set_txt(null); 
                         	count_rcvd_msgs++;
                         	return i;}).
                         forEach(i -> db_insert(i));
+                        
+            	}
+            	catch(Exception e) {
+            		System.out.println("process_msgs " + e);
+            	}
+             
             }
-            msg_list=null;
+ 
+            reset_msg();
         }
-        System.out.println("con done process_msgs");
+        // System.out.println("con done process_msgs");
 
     }
+    
     public int get_rcvd_msgs()
     {
     	return count_rcvd_msgs;

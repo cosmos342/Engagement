@@ -3,19 +3,14 @@ package com.example.lamda.demo;
 import  java.util.Scanner;
 public class EngagementSim {
 
-    final private Producer prod;
     final private DataBase db;
-    private Consumer con;
     private Thread cons_t;
     
-    EngagementSim()
-    {
-        prod = new Producer();
-        // con =  Consumer.getInstance();
+    EngagementSim() {
+    	System.out.println("enagementsim");
         db = DataBase.getInstance();
 
     }
-
 
     /**
      * Start consumer thread
@@ -33,18 +28,31 @@ public class EngagementSim {
     void consumer_stop()
     {
         System.out.println("stop consumer thread");
-        cons_t.interrupt();
+        byte [] msg = new Terminate().encode();
+        if(msg.length > 0) {
+            MsgQ.getInstance().enqueue(msg);
+            System.out.println("SENDING TERMINATE");
+        }
+        
+        try {
+        	cons_t.join();
+        } catch(Exception e) {
+        	System.out.println("consumer_stopped "  + e);
+        }
+        
+    
     }
 
     /**
-     * @param num: Number of messages Twitter and Facebook messages to be simulateds 
+     * @param num: Number of messages Twitter and Facebook messages to be simulates
      *             Start consumer thread. Shutdown when the simulation is done
      * @return
      */
     String run_once(int num)
     {
-        prod.produce_feed(num,FeedSource.TWTR);
-        prod.produce_feed(num,FeedSource.FB);
+        Producer.produce_feed(num,FeedSource.TWTR);
+        Producer.produce_feed(num,FeedSource.FB);
+        System.out.println("producer done " + Thread.currentThread().getName());
         try {
             Thread.sleep(20);
         }
@@ -52,31 +60,42 @@ public class EngagementSim {
             Thread.currentThread().interrupt();
         }
         // con.process_msgs();
-
+        System.out.println("consumer start");
         consumer_start();
         try {
             Thread.sleep(3000);
         }
-        catch(InterruptedException e)
-        {
+        catch(InterruptedException e) {
             System.out.println("consumer interrupted");
             System.out.println(e);
         }
+        
+        while(db.get_insert_count() < (num*2))
+        {
+        	try {
+        		Thread.sleep(2000);
+        	}
+            catch(InterruptedException e) {
+                System.out.println("count interrupted");
+                System.out.println(e);
+            }
+        	
+        }
         consumer_stop();
         
-        String indiv= db.get_stats(FeedSource.TWTR,10);
+        String res= db.get_all_stats() + "\r\n" + db.get_stats();
+        System.out.println(res);
+        db.reset();
         
-        
-        return db.get_all_stats() + '\n' + indiv;
+        return res;
 
     }
 
     public static void main(String [] args)
     {
         EngagementSim sim = new EngagementSim();
-        // sim.run();
-        System.out.println(sim.run_once(args.length > 0 ? Integer.parseInt(args[0]):50));
+        sim.run_once(args.length > 0 ? Integer.parseInt(args[0]):25000);
+        System.out.println("SIM DONE");
 
     }
-
 }

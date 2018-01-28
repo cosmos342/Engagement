@@ -10,7 +10,7 @@ public class MsgQ {
     /**
      * Max QueueSize 
      */
-    final private static int QUEUE_SIZE=1000;
+    final private static int QUEUE_SIZE=50000;
 
     /**
      * If QueueSize is reached the sender blocks. If queue is empty receiver blocks
@@ -43,7 +43,7 @@ public class MsgQ {
             que.put(msg);
         } catch(InterruptedException e)
         {
-            System.out.println(e);
+            System.out.println("MsgQ: enqueu" + e);
         }
     }
 
@@ -75,10 +75,11 @@ public class MsgQ {
     /**
      * @return Queue Status
      */
-    public boolean is_empty()
+    public int size()
     {
-        // System.out.println("msg_que size" + que.size());
-        return que.size() == 0 ? true : false ;
+        // System.out.(println("msg_que size" + que.size());
+        return que.size();
     }
+
 }
 

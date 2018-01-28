@@ -5,12 +5,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.lang.String;
 
 public class DataBase {
-
-
 
     /**
      * src_map: Map from Feeds(such as Twitter/FB etc tp value of another Map
@@ -53,11 +54,29 @@ public class DataBase {
         return result;
     }
 
+    /**
+     * reset database
+     */
+    public void reset()
+    {
+        db_lock.writeLock().lock();
+        try {
+        	src_map.clear();
+        	user_map.clear();
+        }
+        finally {
+            db_lock.writeLock().unlock();
+        }
+    	count_insert=0;
+    }
+
+    /**
+     * Utility function for creating list to store stats per feed type
+     */
     private List<Integer> init_feed_type_list()
     {
         List<Integer> feed_lst = new ArrayList<>();
-        for(int i =0; i < FeedType.values().length ; i++)
-        {
+        for(int i =0; i < FeedType.values().length ; i++) {
             feed_lst.add(i,0);
         }
         return feed_lst;
@@ -69,7 +88,7 @@ public class DataBase {
      */
     public void insert(byte [] msg)
     {
-        System.out.println("DataBase insert msg");
+        // System.out.println("DataBase insert msg");
         Object obj;
         try {
             obj = SerDes.deserialize(msg);
@@ -101,7 +120,6 @@ public class DataBase {
             src_map.put(feed.get_source(),sid_map);
 
 
-            // Todo user info later
             List<Integer> fdlst = user_map.getOrDefault(feed.get_user_id(),
             												init_feed_type_list());
             count = fdlst.get(type_idx);
@@ -119,24 +137,53 @@ public class DataBase {
      * @param id: Post or Tweet Id.
      * @return String: String returns the #Likes #DisLikes for a post id
      */
-    public String get_stats(FeedSource src, int id)
+    public String get_stats()
     {
-        String res= "";
+        // String res= "";
+    	String mres="";
         db_lock.readLock().lock();
-        try {
-                if(src_map.containsKey(src)) {
-                    Map<Integer, List<Integer>> id_map = src_map.get(src);
-                    if (id_map.containsKey(id)) {
-                        List<Integer> type_lst = id_map.get(id);
-                        res = new String(id + " " + "#LIKES " + type_lst.get(FeedType.LIKE.ordinal())
-                                + " #REPLY " + type_lst.get(FeedType.REPLY.ordinal()));
-                    }
-                }
+        try { 
+                Set<Map.Entry<FeedSource, Map<Integer, List<Integer>>>> eset = src_map.entrySet();
+          
+                for(Map.Entry<FeedSource, Map<Integer, List<Integer>>> e : eset) {
+                	FeedSource sr = e.getKey();
+                	Map<Integer,List<Integer>> val = e.getValue();
+                	Iterator<Map.Entry<Integer, List<Integer>>> iter = val.entrySet().iterator();
+                	if(iter.hasNext()) {
+                		Map.Entry<Integer,List<Integer>> fst = iter.next();
+                		mres += String.format("%-12s",(sr == FeedSource.FB) ? "FB-ID" : "TWTR-ID") ;
 
+                		if(sr==FeedSource.FB) {
+                			mres += String.format("%-12d%-12s%-12d%-12s%-12d\r\n",fst.getKey(),
+                					"LIKES",fst.getValue().get(FeedType.LIKE.ordinal()),
+                					"REPLY",fst.getValue().get(FeedType.REPLY.ordinal()));
+                		}
+                		else {
+                			mres += String.format("%-12d%-12s%-12d%-12s%-12d\r\n",fst.getKey(),
+                					"RETWEET",fst.getValue().get(FeedType.RETWEET.ordinal()),
+                					"TWTFWD",fst.getValue().get(FeedType.FWD.ordinal()));
+
+                		}
+                	}
+                }
+                
+            	// user info
+            	Iterator<Map.Entry<Integer, List<Integer>>> uiter = user_map.entrySet().iterator();
+            	if(uiter.hasNext()) {
+            		Map.Entry<Integer,List<Integer>> fst = uiter.next();
+
+            		mres += String.format("%-12s%-12d%-12s%-12d%-12s%-12d%-12s%-12d%-12s%-12d",
+            				"USERID",fst.getKey(),"LIKES",fst.getValue().get(FeedType.LIKE.ordinal()), 
+            				"REPLY",fst.getValue().get(FeedType.REPLY.ordinal()),
+            				"RETWEET",fst.getValue().get(FeedType.RETWEET.ordinal()),
+            				"TWTFWD",fst.getValue().get(FeedType.FWD.ordinal()));
+            		
+            	}
+                
         } finally {
             db_lock.readLock().unlock();
         }
-        return res;
+        return mres;
 
     }
     
@@ -148,9 +195,11 @@ public class DataBase {
         String res;
         db_lock.readLock().lock();
         try {
-            res =   "#TWTS " + (src_map.containsKey(FeedSource.TWTR) ? src_map.get(FeedSource.TWTR).size() : 0 )
-                    + " #FBPOSTS " + (src_map.containsKey(FeedSource.FB) ? src_map.get(FeedSource.FB).size() : 0 )
-                    + " #USERS " + user_map.size();
+            res =   String.format("%-12s%-12d%-12s%-12d%-12s%-12d","TWTS", 
+            		src_map.containsKey(FeedSource.TWTR) ? src_map.get(FeedSource.TWTR).size() : 0,
+                    "FBPOSTS",src_map.containsKey(FeedSource.FB) ? src_map.get(FeedSource.FB).size() : 0, 
+                    "USERS", user_map.size());
+            
         } finally {
             db_lock.readLock().unlock();
         }

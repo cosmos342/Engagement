@@ -34,7 +34,7 @@ public class TwitterFeed implements Feed, Serializable {
     {
         twt_id=rand.nextInt(100);
         email_id = rand.nextInt(100);
-        type=FeedType.REPLY;
+        type= rand.nextInt(2)==0 ?  FeedType.RETWEET : FeedType.FWD;
         txt="this is tweet";
     }
     public int get_id()
@@ -67,7 +67,7 @@ public class TwitterFeed implements Feed, Serializable {
         try {
             return SerDes.serialize(this);
         } catch (IOException e) {
-            System.out.println(e);
+            System.out.println("TwitterFeed:encode" + e);
             return new byte[0];
         }
     }

@@ -17,11 +17,10 @@ public class FBFeed implements Feed, Serializable {
     
     final static Random rand = new Random();
 
-    FBFeed()
-    {
+    FBFeed() {
         fb_post_id = rand.nextInt(100);
         email_id = rand.nextInt(100);
-        type = FeedType.LIKE;
+        type = rand.nextInt(2)==0 ? FeedType.REPLY : FeedType.LIKE;
         txt = "this is fb";
     }
 
@@ -58,7 +57,7 @@ public class FBFeed implements Feed, Serializable {
         try {
             return SerDes.serialize(this);
         } catch (IOException e) {
-            System.out.println(e);
+            System.out.println("FBFeed: encode " + e);
             return new byte[0];
         }
     }
