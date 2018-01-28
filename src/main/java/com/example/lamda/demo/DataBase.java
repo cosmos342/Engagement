@@ -108,7 +108,7 @@ public class DataBase {
         try {
 
             Map<Integer,List<Integer>> sid_map = src_map.getOrDefault(feed.get_source(),
-            											new HashMap<Integer,List<Integer>>());
+          							new HashMap<Integer,List<Integer>>());
             List<Integer> lst = sid_map.getOrDefault(feed.get_id(),init_feed_type_list());
 
             int id = feed.get_id();
@@ -121,7 +121,7 @@ public class DataBase {
 
 
             List<Integer> fdlst = user_map.getOrDefault(feed.get_user_id(),
-            												init_feed_type_list());
+            					init_feed_type_list());
             count = fdlst.get(type_idx);
             fdlst.set(type_idx,++count);
             user_map.put(feed.get_user_id(), fdlst);

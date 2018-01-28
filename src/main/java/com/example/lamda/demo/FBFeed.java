@@ -5,12 +5,12 @@ import java.io.Serializable;
 import java.util.Random;
 
 public class FBFeed implements Feed, Serializable {
-    /**
-	 * email_id: the user who is engaging about the post
-	 * FeedType: Like,Reply
-	 */
-	private static final long serialVersionUID = 1L;
-	private int fb_post_id;
+   /**
+    * email_id: the user who is engaging about the post
+    * FeedType: Like,Reply
+    */
+    private static final long serialVersionUID = 1L;
+    private int fb_post_id;
     private int email_id;
     private FeedType type;
     private String txt;

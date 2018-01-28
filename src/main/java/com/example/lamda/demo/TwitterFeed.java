@@ -6,13 +6,13 @@ import java.util.Random;
 
 public class TwitterFeed implements Feed, Serializable {
     /**
-	 * serializationUID for serialization
-	 */
-	private static final long serialVersionUID = 1L;
-	/**
-	 * TweetId
-	 */
-	private int twt_id;
+     * serializationUID for serialization
+     */
+    private static final long serialVersionUID = 1L;
+    /**
+     * TweetId
+     */
+    private int twt_id;
     /**
      * User email_id who engaged about tweet
      */

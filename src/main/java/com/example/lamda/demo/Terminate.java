@@ -9,9 +9,9 @@ import java.io.Serializable;
 
 public class Terminate  implements Serializable {
     /**
-	 * serializationUID for serialization
-	 */
-	private static final long serialVersionUID = 1L;
+     * serializationUID for serialization
+     */
+     private static final long serialVersionUID = 1L;
 	
     public byte [] encode()
     {
