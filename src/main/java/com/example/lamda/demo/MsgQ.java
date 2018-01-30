@@ -80,6 +80,12 @@ public class MsgQ {
         // System.out.(println("msg_que size" + que.size());
         return que.size();
     }
+    
+    public static int max_q_size()
+    {
+    	return QUEUE_SIZE;
+    }
 
 }
+
 

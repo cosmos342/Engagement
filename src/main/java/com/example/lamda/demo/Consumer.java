@@ -172,11 +172,11 @@ public class Consumer implements Runnable {
             		
             		msg_list.stream().
                 		filter(i -> i != null).	
-                        map(i -> { 
+                        	map(i -> { 
                         	((Feed)i).set_txt(null); 
                         	count_rcvd_msgs++;
                         	return i;}).
-                        forEach(i -> db_insert(i));
+                        	forEach(i -> db_insert(i));
                         
             	}
             	catch(Exception e) {

@@ -50,9 +50,16 @@ public class EngagementSim {
      */
     String run_once(int num)
     {
+        if(num*2 > MsgQ.max_q_size())
+        {
+        	System.out.println("Error: max event size is " + MsgQ.max_q_size());
+        	return "Error: max event size is " + MsgQ.max_q_size();
+        }
+        
         Producer.produce_feed(num,FeedSource.TWTR);
         Producer.produce_feed(num,FeedSource.FB);
         System.out.println("producer done " + Thread.currentThread().getName());
+
         try {
             Thread.sleep(20);
         }
@@ -70,7 +77,7 @@ public class EngagementSim {
             System.out.println(e);
         }
         
-        while(db.get_insert_count() < (num*2))
+        while(db.get_insert_count() < (num*2) )
         {
         	try {
         		Thread.sleep(2000);
@@ -94,7 +101,20 @@ public class EngagementSim {
     public static void main(String [] args)
     {
         EngagementSim sim = new EngagementSim();
-        sim.run_once(args.length > 0 ? Integer.parseInt(args[0]):25000);
+        int numevents=100;
+        if(args.length > 0)
+        {
+        	try {
+        		numevents = Integer.parseInt(args[0]);
+        	}
+        	catch(Exception e)
+        	{
+        		System.out.println("EngagementSim: provide num events ");
+        		return;
+        	}
+        }
+        
+        sim.run_once(numevents);
         System.out.println("SIM DONE");
 
     }

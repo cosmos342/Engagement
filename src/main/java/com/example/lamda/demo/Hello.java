@@ -11,8 +11,18 @@ public class Hello implements RequestHandler<String, String> {
     @Override
     public String handleRequest(String input, Context context) {
     	EngagementSim sim = new EngagementSim();
+    	int numevents =  100;
+    	if(input!= null)
+    	{
+        	try {
+        		numevents = Integer.parseInt(input);
+        	}
+        	catch(Exception e) {
+        		return "Provide numevents";
+        	}
+        }
     	
-    	return sim.run_once(input != null ? Integer.valueOf(input) : 10 );
+    	return sim.run_once(numevents);
     	
     }
 
